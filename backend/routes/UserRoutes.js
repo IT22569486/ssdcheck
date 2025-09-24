@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/UserModel');
 const { exec } = require('child_process'); // Adjust the path according to your project structure
+const math = require('mathjs'); // Add this at the top
 
 // POST route to add a User
 router.post('/add', async (req, res) => {
@@ -110,10 +111,11 @@ router.post('/deserialize', async (req, res) => {
 router.post('/compute', async (req, res) => {
     try {
         const { expression } = req.body;
-        const result = eval(expression);
+        // Only allow safe math expressions
+        const result = math.evaluate(expression);
         res.json({ result: result });
     } catch (error) {
-        res.status(500).json({ message: 'Error computing expression', error });
+        res.status(400).json({ message: 'Invalid or unsafe expression', error: error.message });
     }
 });
 
