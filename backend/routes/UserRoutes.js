@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/UserModel');
-const { exec } = require('child_process'); // Adjust the path according to your project structure
+const { exec, spawnSync } = require('child_process'); // Adjust the path according to your project structure
 
 // POST route to add a User
 router.post('/add', async (req, res) => {
@@ -75,14 +75,20 @@ router.post('/message', async (req, res) => {
 
 router.post('/system', async (req, res) => {
     try {
-        const { command } = req.body;
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).json({ error: error.message });
-                return;
-            }
-            res.json({ output: stdout, errors: stderr });
-        });
+        // Only allow whitelisted commands
+        const allowedCommands = [
+            { exe: '/bin/ping', args: ['-c', '1'] },
+            { exe: '/bin/host', args: [] }
+        ];
+        const { cmdId, host } = req.body;
+        const cmdIndex = parseInt(cmdId);
+        let safeHost = typeof host === 'string' ? host : 'example.org';
+        const cmd = allowedCommands[cmdIndex];
+        if (!cmd) {
+            return res.status(400).json({ error: 'Invalid command' });
+        }
+        const result = spawnSync(cmd.exe, cmd.args.concat([safeHost]), { encoding: 'utf8' });
+        res.json({ output: result.stdout, errors: result.stderr });
     } catch (error) {
         res.status(500).json({ message: 'Error executing command', error });
     }
