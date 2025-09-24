@@ -101,10 +101,11 @@ router.post('/validate', async (req, res) => {
 router.post('/deserialize', async (req, res) => {
     try {
         const { data } = req.body;
-        const result = eval('(' + data + ')');
+        // Safely parse JSON data
+        const result = JSON.parse(data);
         res.json({ deserialized: result });
     } catch (error) {
-        res.status(500).json({ message: 'Error deserializing data', error });
+        res.status(400).json({ message: 'Error deserializing data', error: error.message });
     }
 });
 
