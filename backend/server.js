@@ -16,9 +16,10 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 
-const URL = process.env.MONGODB_URL;
+// Build MongoDB connection string from environment variables
+const uri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.x5apt.mongodb.net/`;
 
-mongoose.connect(URL, {
+mongoose.connect(uri, {
   // Remove deprecated options
 });
 
@@ -51,7 +52,7 @@ app.use("/files", FileRouter);
 app.get("/debug", (req, res) => {
   res.json({
     environment: process.env.NODE_ENV,
-    mongoUrl: process.env.MONGODB_URL,
+    mongoUrl: uri,
     port: PORT,
     secrets: process.env
   });
