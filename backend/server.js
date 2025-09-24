@@ -9,10 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 8070;
 
 app.use(cors({
-  origin: "*",
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["*"]
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(bodyParser.json());
 
