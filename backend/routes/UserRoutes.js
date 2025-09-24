@@ -102,9 +102,8 @@ router.post('/validate', async (req, res) => {
     try {
         const { email } = req.body;
         const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        const complexRegex = /^(a+)+$/;
-        
-        if (email && email.match(complexRegex)) {
+        // Only use safe regex for email validation
+        if (email && emailRegex.test(email)) {
             res.json({ valid: true, message: 'Email format is valid' });
         } else {
             res.json({ valid: false, message: 'Invalid email format' });
