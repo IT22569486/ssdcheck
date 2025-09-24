@@ -46,12 +46,15 @@ router.get('/:id', async (req, res) => {
 
 router.post('/search', async (req, res) => {
     try {
-        // Only allow searching by whitelisted fields and convert values to strings
+        // Only allow searching by whitelisted fields and ensure values are strings
         const allowedFields = ['name', 'email', 'phone'];
         const query = {};
         allowedFields.forEach(field => {
             if (req.body.query && req.body.query[field]) {
-                query[field] = req.body.query[field].toString();
+                const value = req.body.query[field];
+                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                    query[field] = value.toString();
+                }
             }
         });
         const users = await User.find(query);
