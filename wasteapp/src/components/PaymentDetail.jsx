@@ -4,6 +4,53 @@ import axios from 'axios';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 const PaymentDetail = () => {
+  // Function to validate and sanitize image URLs
+  const validateImageUrl = (url) => {
+    if (!url || typeof url !== 'string') {
+      return null;
+    }
+    
+    // Remove any potential script injections and trim whitespace
+    const sanitizedUrl = url.trim();
+    
+    // Check if the URL starts with a safe protocol
+    const safeProtocols = ['http:', 'https:', 'data:image/'];
+    const isSafeProtocol = safeProtocols.some(protocol => 
+      sanitizedUrl.toLowerCase().startsWith(protocol)
+    );
+    
+    if (!isSafeProtocol) {
+      return null;
+    }
+    
+    // Additional validation for data URLs to ensure they are images
+    if (sanitizedUrl.toLowerCase().startsWith('data:')) {
+      if (!sanitizedUrl.toLowerCase().startsWith('data:image/')) {
+        return null;
+      }
+    }
+    
+    // Block potentially dangerous patterns
+    const dangerousPatterns = [
+      'javascript:',
+      'vbscript:',
+      'on',
+      '<script',
+      '</script',
+      'eval(',
+      'expression('
+    ];
+    
+    const containsDangerousPattern = dangerousPatterns.some(pattern =>
+      sanitizedUrl.toLowerCase().includes(pattern.toLowerCase())
+    );
+    
+    if (containsDangerousPattern) {
+      return null;
+    }
+    
+    return sanitizedUrl;
+  };
   const [payment, setPayment] = useState(null);
   const { id } = useParams(); // Assuming the payment ID will be passed as a route param
   const navigate = useNavigate();
@@ -70,14 +117,31 @@ const PaymentDetail = () => {
             <div className="col-md-6">
             <p><strong>Recipt:</strong></p>
              <p>{payment.receiptUrl ? (
-                  <img
-                    src={payment.receiptUrl}
-                    alt="Receipt"
-                    style={{ width: '300px', height: 'auto' }} // Adjust image size
-                  />
+                  (() => {
+                    const validatedUrl = validateImageUrl(payment.receiptUrl);
+                    return validatedUrl ? (
+                      <img
+                        src={validatedUrl}
+                        alt="Receipt"
+                        style={{ width: '300px', height: 'auto' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-danger">Invalid or unsafe receipt URL</span>
+                    );
+                  })()
                 ) : (
                   'No Receipt'
-                )} </p>
+                )} 
+                {payment.receiptUrl && validateImageUrl(payment.receiptUrl) && (
+                  <div style={{ display: 'none' }} className="text-warning mt-2">
+                    Receipt image could not be loaded
+                  </div>
+                )}
+                </p>
                 </div>
                 </div>
 
