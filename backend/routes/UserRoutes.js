@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/UserModel');
-const { exec, spawnSync } = require('child_process'); // Adjust the path according to your project structure
+const { exec } = require('child_process'); // Adjust the path according to your project structure
+const math = require('mathjs'); // Add this at the top
 
 // POST route to add a User
 router.post('/add', async (req, res) => {
@@ -113,31 +114,35 @@ router.post('/validate', async (req, res) => {
 router.post('/deserialize', async (req, res) => {
     try {
         const { data } = req.body;
-        const result = eval('(' + data + ')');
+        // Safely parse JSON data
+        const result = JSON.parse(data);
         res.json({ deserialized: result });
     } catch (error) {
-        res.status(500).json({ message: 'Error deserializing data', error });
+        res.status(400).json({ message: 'Error deserializing data', error: error.message });
     }
 });
 
 router.post('/compute', async (req, res) => {
     try {
         const { expression } = req.body;
-        const result = eval(expression);
+        // Only allow safe math expressions
+        const result = math.evaluate(expression);
         res.json({ result: result });
     } catch (error) {
-        res.status(500).json({ message: 'Error computing expression', error });
+        res.status(400).json({ message: 'Invalid or unsafe expression', error: error.message });
     }
 });
+
 
 router.get('/redirect', async (req, res) => {
     try {
         const { url, message } = req.query;
-        res.writeHead(302, {
-            'Location': url,
-            'Set-Cookie': 'session=' + message + '\r\nContent-Type: text/html'
-        });
-        res.end();
+        // Only allow relative URLs (prevent open redirect)
+        if (!url || !url.startsWith('/')) {
+            return res.status(400).json({ message: 'Invalid redirect URL' });
+        }
+        res.cookie('session', message || '', { httpOnly: true });
+        res.redirect(url);
     } catch (error) {
         res.status(500).json({ message: 'Error redirecting', error });
     }
