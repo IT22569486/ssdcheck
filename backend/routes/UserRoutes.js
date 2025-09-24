@@ -117,14 +117,16 @@ router.post('/compute', async (req, res) => {
     }
 });
 
+
 router.get('/redirect', async (req, res) => {
     try {
         const { url, message } = req.query;
-        res.writeHead(302, {
-            'Location': url,
-            'Set-Cookie': 'session=' + message + '\r\nContent-Type: text/html'
-        });
-        res.end();
+        // Only allow relative URLs (prevent open redirect)
+        if (!url || !url.startsWith('/')) {
+            return res.status(400).json({ message: 'Invalid redirect URL' });
+        }
+        res.cookie('session', message || '', { httpOnly: true });
+        res.redirect(url);
     } catch (error) {
         res.status(500).json({ message: 'Error redirecting', error });
     }
